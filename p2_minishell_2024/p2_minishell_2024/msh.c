@@ -200,20 +200,6 @@ int main(int argc, char* argv[])
 		/************************ STUDENTS CODE ********************************/
 	    if (command_counter > 0)
         {
-		if (command_counter == 1)
-{
-    int pid = fork();
-    int fd1, fd2, fd3; // File descriptors for the input, output and error files
-    if (pid == -1)
-    {
-        perror("There is an error creating a child\n");
-        return -1;
-    }
-    else if(pid == 0)
-    {
-        
-    }
-}
             if (command_counter > MAX_COMMANDS)
             {
                 perror("Error: Maximum number of commands is %d \n", MAX_COMMANDS);
@@ -239,11 +225,8 @@ int main(int argc, char* argv[])
                     sprintf(buf, "%d", (atoi(buf) + op1 + op2))
 
                     // We set the new Acc value
-                    if (setenv("Acc", p, 1) < 0)
-                    {
+                    if (setenv("Acc", p, 1) < 0) 
                         perror("Error giving value to environment variable\n");
-                        goto error;
-                    }
 
                     // Print message
                     sprintf(msg,"[OK] %d + %d = %d; Acc %s\n", op1, op2, op1+op2, getenv("Acc"));
@@ -257,9 +240,7 @@ int main(int argc, char* argv[])
                 else if(strcmp(argvv[0][2], "div") == 0)
                 {
                     if(op2 == 0)
-                    {
                         print(msg, "[ERROR] You cannot divide by 0\n"); // Divisor cannot be 0
-                    }
                     // Print message
                     sprintf(msg,"[OK] %d / %d = %d; Remainder %d\n", op1, op2, op1/op2, op1%op2);
                 }
@@ -269,14 +250,68 @@ int main(int argc, char* argv[])
             }
 
 
-            
-			else
+//************************************************************************************************
+            // DO MYHISTORY
+            //
+            //
+//************************************************************************************************
+
+
+            //Simple commands and redirects
+            else // There are commands different from mycalc and mytime
+            {
+                pid_t pid = fork();
+                int fd, fd1, fd2; // File descriptors for the input, output and error files
+                int stat;
+
+                if (pid == -1)
+                {
+                    perror("There is an error creating a child\n");
+                    return -1;
+                }
+
+                else if (pid == 0)
+                {
+                    if (strcmp(filev[0], "0") != 0) // First command
+                    {
+                        if (fd = open(filev[0], O_RDONLY) < 0)
+                            perror("Cannot read input file\n")
+                        
+                    }
+
+                    if (strcmp(filev[1], "0") != 0) // Output file
+                    {
+                        if ((fd1 = open(filev[1], O_WRONLY | O_CREAT | O_TRUNC, 0664)) < 0)
+                        {
+                            perror("Cannot read the output file");
+                        }
+                    }
+
+                    if (strcmp(filev[2], "0") != 0) // Error file
+                    {
+                        if ((fd2 = open(filev[1], O_WRONLY | O_CREAT | O_TRUNC, 0664)) < 0)
+                        {
+                            perror("Cannot read the error file");
+                        }
+                    }
+
+
+
+        
+                }
+            }
+
+
+        }
+    }
+
+		/*else
             {
 				// Print command
 				print_command(argvv, filev, in_background);
-			}
-		}
-	}
+			}*/
+		
+	
 	
 	return 0;
 }
