@@ -200,6 +200,20 @@ int main(int argc, char* argv[])
 		/************************ STUDENTS CODE ********************************/
 	    if (command_counter > 0)
         {
+		if (command_counter == 1)
+{
+    int pid = fork();
+    int fd1, fd2, fd3; // File descriptors for the input, output and error files
+    if (pid == -1)
+    {
+        perror("There is an error creating a child\n");
+        return -1;
+    }
+    else if(pid == 0)
+    {
+        
+    }
+}
             if (command_counter > MAX_COMMANDS)
             {
                 perror("Error: Maximum number of commands is %d \n", MAX_COMMANDS);
