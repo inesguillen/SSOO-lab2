@@ -145,7 +145,8 @@ int main(int argc, char* argv[])
 	char *cmd_line = NULL;
 	char *cmd_lines[10];
 
-	if (!isatty(STDIN_FILENO)) {
+	if (!isatty(STDIN_FILENO))
+    {
 		cmd_line = (char*)malloc(100);
 		while (scanf(" %[^\n]", cmd_line) != EOF){
 			if(strlen(cmd_line) <= 0) return 0;
@@ -173,33 +174,62 @@ int main(int argc, char* argv[])
 		signal(SIGINT, siginthandler);
 
 		if (run_history)
-    {
-        run_history=0;
-    }
-    else{
-        // Prompt 
-        write(STDERR_FILENO, "MSH>>", strlen("MSH>>"));
-
-        // Get command
-        //********** DO NOT MODIFY THIS PART. IT DISTINGUISH BETWEEN NORMAL/CORRECTION MODE***************
-        executed_cmd_lines++;
-        if( end != 0 && executed_cmd_lines < end) {
-            command_counter = read_command_correction(&argvv, filev, &in_background, cmd_lines[executed_cmd_lines]);
+        {
+            run_history=0;
         }
-        else if( end != 0 && executed_cmd_lines == end)
-            return 0;
         else
-            command_counter = read_command(&argvv, filev, &in_background); //NORMAL MODE
-    }
+        {
+            // Prompt 
+            write(STDERR_FILENO, "MSH>>", strlen("MSH>>"));
+
+            // Get command
+            //********** DO NOT MODIFY THIS PART. IT DISTINGUISH BETWEEN NORMAL/CORRECTION MODE***************
+            executed_cmd_lines++;
+            if( end != 0 && executed_cmd_lines < end)
+            {
+                command_counter = read_command_correction(&argvv, filev, &in_background, cmd_lines[executed_cmd_lines]);
+            }
+            else if( end != 0 && executed_cmd_lines == end)
+                return 0;
+            else
+                command_counter = read_command(&argvv, filev, &in_background); //NORMAL MODE
+        }
 		//************************************************************************************************
 
 
 		/************************ STUDENTS CODE ********************************/
-	   if (command_counter > 0) {
-			if (command_counter > MAX_COMMANDS){
-				printf("Error: Maximum number of commands is %d \n", MAX_COMMANDS);
+	    if (command_counter > 0)
+        {
+            if (command_counter > MAX_COMMANDS)
+            {
+                perror("Error: Maximum number of commands is %d \n", MAX_COMMANDS);
+			    //printf("Error: Maximum number of commands is %d \n", MAX_COMMANDS);
 			}
-			else {
+
+            // Code mycalc
+            if (strcmp(argvv[0][0], "mycalc") == 0 && argvv[0][1] != NULL && argvv[0][2] != NULL && argvv[0][3] != NULL)
+            {
+                int op1 = atoi(argvv[0][1]), op2 = atoi(argvv[0][3]); // Convert operators into integers         
+                char sentence[100]; // Where we are going to save the message to be printed
+
+                // We have case 'add'
+                if(strcmp(argvv[0][2], "add") == 0)
+                {
+                    
+                    char aux[128];
+                    char *p = aux; // Pointer of aux
+                    if (p == NULL) p = "0";
+                     = + op1 + op2;
+
+
+                }
+
+            }
+
+
+
+			else
+            {
 				// Print command
 				print_command(argvv, filev, in_background);
 			}
