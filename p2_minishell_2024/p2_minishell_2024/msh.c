@@ -206,6 +206,12 @@ int main(int argc, char* argv[])
                 perror("Error: Maximum number of commands is %d \n", MAX_COMMANDS);
 			    //printf("Error: Maximum number of commands is %d \n", MAX_COMMANDS);
 			}
+            else
+            {
+                // Print command
+                print_command(argvv, filev, in background);
+            }
+
 
             // Code mycalc
             if (strcmp(argvv[0][0], "mycalc") == 0 && argvv[0][1] != NULL && argvv[0][2] != NULL && argvv[0][3] != NULL)
@@ -223,7 +229,7 @@ int main(int argc, char* argv[])
                     if (p == NULL) p = "0";
                     
                     // We save in buf (string) the future value of Acc
-                    sprintf(buf, "%d", (atoi(buf) + op1 + op2))
+                    sprintf(buf, "%d", (atoi(buf) + op1 + op2));
 
                     // We set the new Acc value
                     if (setenv("Acc", p, 1) < 0) 
@@ -283,7 +289,7 @@ int main(int argc, char* argv[])
                     {
                         if (fd = open(filev[0], O_RDONLY) < 0)
                         {
-                            perror("Cannot read input file\n")
+                            perror("Cannot read input file\n");
                         }
 
                     }
@@ -315,14 +321,6 @@ int main(int argc, char* argv[])
 
         }
     }
-
-		/*else
-            {
-				// Print command
-				print_command(argvv, filev, in_background);
-			}*/
-		
-	
 	
 	return 0;
 }
