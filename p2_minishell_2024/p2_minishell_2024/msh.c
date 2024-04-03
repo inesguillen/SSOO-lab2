@@ -15,6 +15,7 @@
 #include <unistd.h>
 #include <sys/wait.h>
 #include <signal.h>
+#include <math.h>
 
 #define MAX_COMMANDS 8
 
@@ -251,7 +252,13 @@ int main(int argc, char* argv[])
 
 
 //************************************************************************************************
-            // DO MYHISTORY
+            // Code myhistory
+            else if (strcmp(argvv[0][0], "myhistory") == 0)
+            {
+
+            }
+
+            
             //
             //
 //************************************************************************************************
@@ -267,16 +274,18 @@ int main(int argc, char* argv[])
                 if (pid == -1)
                 {
                     perror("There is an error creating a child\n");
-                    return -1;
+                    // return -1;
                 }
 
                 else if (pid == 0)
                 {
-                    if (strcmp(filev[0], "0") != 0) // First command
+                    if (strcmp(filev[0], "0") != 0) // Input command
                     {
                         if (fd = open(filev[0], O_RDONLY) < 0)
+                        {
                             perror("Cannot read input file\n")
-                        
+                        }
+
                     }
 
                     if (strcmp(filev[1], "0") != 0) // Output file
@@ -285,6 +294,7 @@ int main(int argc, char* argv[])
                         {
                             perror("Cannot read the output file");
                         }
+
                     }
 
                     if (strcmp(filev[2], "0") != 0) // Error file
@@ -293,6 +303,7 @@ int main(int argc, char* argv[])
                         {
                             perror("Cannot read the error file");
                         }
+
                     }
 
 
