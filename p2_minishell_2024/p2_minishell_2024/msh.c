@@ -265,7 +265,7 @@ int main(int argc, char* argv[])
 
 
             //Simple commands and redirects
-            else // There are commands different from mycalc and mytime
+            else // There are commands different from mycalc and myhistory
             {
                 pid_t pid = fork();
                 int fd, fd1, fd2; // File descriptors for the input, output and error files
