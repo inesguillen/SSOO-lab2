@@ -273,54 +273,99 @@ int main(int argc, char* argv[])
             //Simple commands and redirects
             else // There are commands different from mycalc and myhistory
             {
-                pid_t pid = fork();
-                int fd, fd1, fd2; // File descriptors for the input, output and error files
-                int stat;
+                pid_t pid;
+                int fd[2];
+                int fd1, fd2, fd3; // File descriptors for the input, output and error files
+                int okpipe, stat;
 
-                if (pid == -1)
+                // Input command
+                if (strcmp(filev[0], "0") != 0) 
                 {
-                    perror("There is an error creating a child\n");
-                    // return -1;
+                    // Checks if there is an input file
+                    if (fd1 = open(filev[0], O_RDONLY) < 0)
+                        perror("Cannot open input file\n"); // Print error
+                    if (dup2(fd1, 0) < 0)
+                        perror("Error dup2 fd1\n");
+                    if(close(fd1) < 0)
+                        perror("Cannot close descriptor fd1\n");
+                }
+                
+                // Output file
+                if (strcmp(filev[1], "0") != 0) 
+                {
+                    // Checks if there is an output file
+                    if ((fd2 = open(filev[1], O_WRONLY | O_CREAT | O_TRUNC, 0664)) < 0)
+                        perror("Cannot read the output file");
+                    if (dup2(fd2, 0) < 0)
+                        perror("Error dup2 fd2\n");
+                    if(close(fd2) < 0)
+                        perror("Cannot close descriptor fd2\n");
                 }
 
-                else if (pid == 0)
+                // Error file
+                if (strcmp(filev[2], "0") != 0) 
                 {
-                    if (strcmp(filev[0], "0") != 0) // Input command
-                    {
-                        if (fd = open(filev[0], O_RDONLY) < 0)
-                        {
-                            perror("Cannot read input file\n");
-                        }
-
-                    }
-
-                    if (strcmp(filev[1], "0") != 0) // Output file
-                    {
-                        if ((fd1 = open(filev[1], O_WRONLY | O_CREAT | O_TRUNC, 0664)) < 0)
-                        {
-                            perror("Cannot read the output file");
-                        }
-
-                    }
-
-                    if (strcmp(filev[2], "0") != 0) // Error file
-                    {
-                        if ((fd2 = open(filev[1], O_WRONLY | O_CREAT | O_TRUNC, 0664)) < 0)
-                        {
-                            perror("Cannot read the error file");
-                        }
-
-                    }
-
-
-
-        
+                    // Checks if there is an error file
+                    if ((fd3 = open(filev[2], O_WRONLY | O_CREAT | O_TRUNC, 0664)) < 0)
+                        perror("Cannot read the error file");
+                    if (dup2(fd3, 0) < 0)
+                        perror("Error dup2 fd3\n");
+                    if(close(fd3) < 0)
+                        perror("Cannot close descriptor fd3\n");
                 }
+
+                for (int i=0; i < command_counter; i++)
+                {
+                    // Create n-1 pipes
+                    if (i != command_counter - 1) 
+                    {
+                        if ((okpipe = pipe(fd[i])) < 0)
+                        {
+                            // If there is an error
+                            perror("Cannot create pipe\n");
+                            exit(0);
+                        }
+                    }
+
+                    // Create a child
+                    pid = fork();
+
+                    // If there is an error
+                    if (pid == -1)
+                    {
+                        perror("There is an error creating a child\n");
+                        return -1;
+                    }
+
+                    // Child
+                    else if (pid == 0)
+                    {
+                        getCompleteCommand(argvv, i);
+                        if (i != 0)
+                        {
+                            
+                            
+                            
+            
+                            
+
+                        }
+                    
+                    }
+
+                    else
+                    {
+                    }
+
+
+                }
+    
             }
 
 
         }
     }
 	
+    // Return and finish
 	return 0;
 }
