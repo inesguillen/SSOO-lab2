@@ -203,13 +203,22 @@ int main(int argc, char* argv[])
         {
             if (command_counter > MAX_COMMANDS)
             {
-                perror("Error: Maximum number of commands is %d \n", MAX_COMMANDS);
-			    //printf("Error: Maximum number of commands is %d \n", MAX_COMMANDS);
+                char max_commands_str[20];
+                sprintf(max_commands_str, "%d", MAX_COMMANDS);
+
+                // Construye el mensaje de error completo
+                char error_msg[100] = "Error: Maximum number of commands is ";
+                strcat(error_msg, max_commands_str);
+
+                // Imprime el mensaje de error utilizando perror()
+                perror(error_msg);
+                    //perror("Error: Maximum number of commands is %d \n", MAX_COMMANDS);
+                    //printf("Error: Maximum number of commands is %d \n", MAX_COMMANDS);
 			}
             else
             {
                 // Print command
-                print_command(argvv, filev, in background);
+                print_command(argvv, filev, in_background);
             }
 
 
@@ -247,7 +256,7 @@ int main(int argc, char* argv[])
                 else if(strcmp(argvv[0][2], "div") == 0)
                 {
                     if(op2 == 0)
-                        print(msg, "[ERROR] You cannot divide by 0\n"); // Divisor cannot be 0
+                        printf(msg, "[ERROR] You cannot divide by 0\n"); // Divisor cannot be 0
                     // Print message
                     sprintf(msg,"[OK] %d / %d = %d; Remainder %d\n", op1, op2, op1/op2, op1%op2);
                 }
