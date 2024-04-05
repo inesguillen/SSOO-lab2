@@ -223,46 +223,52 @@ int main(int argc, char* argv[])
 
 
             // Code mycalc
-            if (strcmp(argvv[0][0], "mycalc") == 0 && argvv[0][1] != NULL && argvv[0][2] != NULL && argvv[0][3] != NULL)
-            {
-                // Convert operators into integers
-                int op1 = atoi(argvv[0][1]);
-                int op2 = atoi(argvv[0][3]);          
+            if (strcmp(argvv[0][0], "mycalc") == 0) {
                 char msg[100]; // Where we are going to save the message to be printed
+                if (argvv[0][1] != NULL && argvv[0][2] != NULL && argvv[0][3] != NULL){
 
-                // We have case 'add'
-                if(strcmp(argvv[0][2], "add") == 0)
-                {
-                    char buf[128];
-                    char *p = buf; // Pointer of buf
-                    if (p == NULL) p = "0";
+                    // Convert operators into integers
+                    int op1 = atoi(argvv[0][1]);
+                    int op2 = atoi(argvv[0][3]);          
+
+                    // We have case 'add'
+                    if(strcmp(argvv[0][2], "add") == 0)
+                    {
+                        char buf[128];
+                        char *p = buf; // Pointer of buf
+                        if (p == NULL) p = "0";
+                        
+                        // We save in buf (string) the future value of Acc
+                        sprintf(buf, "%d", (atoi(buf) + op1 + op2));
+
+                        // We set the new Acc value
+                        if (setenv("Acc", p, 1) < 0) 
+                            perror("Error giving value to environment variable\n");
+
+                        // Print message
+                        sprintf(msg,"[OK] %d + %d = %d; Acc %s\n", op1, op2, op1+op2, getenv("Acc"));
+                    }
                     
-                    // We save in buf (string) the future value of Acc
-                    sprintf(buf, "%d", (atoi(buf) + op1 + op2));
+                    // We have case 'mul'
+                    else if(strcmp(argvv[0][2], "mul") == 0)
+                        sprintf(msg,"[OK] %d * %d = %d\n", op1, op2, op1*op2);
 
-                    // We set the new Acc value
-                    if (setenv("Acc", p, 1) < 0) 
-                        perror("Error giving value to environment variable\n");
-
-                    // Print message
-                    sprintf(msg,"[OK] %d + %d = %d; Acc %s\n", op1, op2, op1+op2, getenv("Acc"));
+                    // We have case 'div'
+                    else if(strcmp(argvv[0][2], "div") == 0)
+                    {
+                        printf("op2: %i\n", op2);
+                        if(op2 == 0)
+                            sprintf(msg, "[ERROR] You cannot divide by 0\n"); // Divisor cannot be 0
+                        // Print message
+                        else
+                            sprintf(msg,"[OK] %d / %d = %d; Remainder %d\n", op1, op2, op1/op2, op1%op2);
+                    }
                 }
+                else
+                    // We have error case
+                    sprintf(msg, "[ERROR] The structure of the command is mycalc <operand 1> <add/mul/div> <operand 2>\n");
+                printf(msg);
                 
-                // We have case 'mul'
-                else if(strcmp(argvv[0][2], "mul") == 0)
-                    sprintf(msg,"[OK] %d * %d = %d\n", op1, op2, op1*op2);
-
-                // We have case 'div'
-                else if(strcmp(argvv[0][2], "div") == 0)
-                {
-                    if(op2 == 0)
-                        printf(msg, "[ERROR] You cannot divide by 0\n"); // Divisor cannot be 0
-                    // Print message
-                    sprintf(msg,"[OK] %d / %d = %d; Remainder %d\n", op1, op2, op1/op2, op1%op2);
-                }
-
-                // We have error case
-                else printf("[ERROR] The structure of the command is mycalc <operand 1> <add/mul/div> <operand 2>");
             }
 
 
