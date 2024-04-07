@@ -213,7 +213,6 @@ int main(int argc, char* argv[])
                 // Imprime el mensaje de error utilizando perror()
                 perror(error_msg);
                     //perror("Error: Maximum number of commands is %d \n", MAX_COMMANDS);
-                    //printf("Error: Maximum number of commands is %d \n", MAX_COMMANDS);
 			}
             else
             {
@@ -256,7 +255,6 @@ int main(int argc, char* argv[])
                     // We have case 'div'
                     else if(strcmp(argvv[0][2], "div") == 0)
                     {
-                        printf("op2: %i\n", op2);
                         if(op2 == 0)
                             sprintf(msg, "[ERROR] You cannot divide by 0\n"); // Divisor cannot be 0
                         // Print message
@@ -288,10 +286,25 @@ int main(int argc, char* argv[])
             //Simple commands and redirects
             else // There are commands different from mycalc and myhistory
             {
+                // Create a child
+                pid_t pid = fork();
+                switch (pid)
+                {
+                case -1: // Error while creating a child
+                    perror("Error creating a child\n");
+                    exit(-1);
+                
+                case 0: // Child process
+                    execvp(argvv[0][0], argvv[0]);
+                    perror("Error executing the command\n"); // This line should not be executed
+                    exit(-1);
+                default: // Parent process
+                    wait(&status);
+                }
+                /*
                 pid_t pid;
                 int fd[2];
                 int fd1, fd2, fd3; // File descriptors for the input, output and error files
-                int okpipe, stat;
 
                 // Input command
                 if (strcmp(filev[0], "0") != 0) 
@@ -311,7 +324,7 @@ int main(int argc, char* argv[])
                     // Checks if there is an output file
                     if ((fd2 = open(filev[1], O_WRONLY | O_CREAT | O_TRUNC, 0664)) < 0)
                         perror("Cannot read the output file");
-                    if (dup2(fd2, 0) < 0)
+                    if (dup2(fd2, 1) < 0)
                         perror("Error dup2 fd2\n");
                     if(close(fd2) < 0)
                         perror("Cannot close descriptor fd2\n");
@@ -323,24 +336,26 @@ int main(int argc, char* argv[])
                     // Checks if there is an error file
                     if ((fd3 = open(filev[2], O_WRONLY | O_CREAT | O_TRUNC, 0664)) < 0)
                         perror("Cannot read the error file");
-                    if (dup2(fd3, 0) < 0)
+                    if (dup2(fd3, 2) < 0)
                         perror("Error dup2 fd3\n");
                     if(close(fd3) < 0)
                         perror("Cannot close descriptor fd3\n");
                 }
 
-                for (int i=0; i < command_counter; i++)
+                for (int i = 0; i < command_counter; i++)
                 {
-                    // Create n-1 pipes
-                    if (i != command_counter - 1) 
+                    // Create an array of pipes
+                    int pipes[command_counter-1][2];
+                    for (int i=0;i < command_counter; i++)
                     {
-                        if ((okpipe = pipe(fd[i])) < 0)
+                        if (pipe(pipes[i]) < 0)
                         {
-                            // If there is an error
+                            // Error creating a pipe
                             perror("Cannot create pipe\n");
-                            exit(0);
+                            return -1;
                         }
                     }
+
 
                     // Create a child
                     pid = fork();
@@ -371,16 +386,16 @@ int main(int argc, char* argv[])
                     else
                     {
                     }
-
-
+                
                 }
-    
+
+
+                */
             }
 
 
         }
     }
-	
     // Return and finish
 	return 0;
 }
