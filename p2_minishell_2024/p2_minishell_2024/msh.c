@@ -289,9 +289,20 @@ int main(int argc, char* argv[])
                 // More than one command (from 2 to n commands.)
                 if (command_counter > 1)
                 {
-                    // Save std_in and std_out for later restore
-                    int original_stdin = dup(STDIN_FILENO);
-                    int original_stdout = dup(STDOUT_FILENO);
+                    int original_stderror; // To store stderr
+                    // Error redirection
+                    if (strcmp(filev[2], "0") != 0) // Check if there is an error redirection
+                    {
+                        // Store stderr to restore it later
+                        original_stderror = dup(STDERR_FILENO);
+                        close(STDERR_FILENO); // Close stderr
+                        int fd = open(filev[2], O_WRONLY | O_CREAT | O_TRUNC, 0666); // Open file to write
+                        if (fd != 2) // If redirection was done correctly, fd should be 2
+                        {
+                            perror("Error redirecting errors output");
+                            exit(-1);
+                        }
+                    }
 
                     // Create pipe descriptors.
                     int pip1[2];
@@ -334,6 +345,18 @@ int main(int argc, char* argv[])
                             // First command
                             if (i == 0)
                             {
+                                // Input redirection
+                                if (strcmp(filev[0], "0") != 0) // Check if there is an input redirection
+                                {
+                                    close(STDIN_FILENO); // Close stdin
+                                    int fd = open(filev[0], O_RDONLY); // Open file to read
+                                    if (fd != 0) // If redirection was done correctly, fd should be 0
+                                    {
+                                        perror("Error opening file for input redirection");
+                                        exit(-1);
+                                    }
+                                }
+
                                 close(pip1[0]); // Close pipe 1 read descriptor since it is not needed
                                 dup2(pip1[1], STDOUT_FILENO); // Redirect stdout to pipe 1 write descriptor
                                 close(pip1[1]); // Close duplicated pipe 1 write descriptor
@@ -342,6 +365,18 @@ int main(int argc, char* argv[])
                             {
                                 if (i == command_counter-1) // Last command. Only read from pipe and write into std_out
                                 {
+                                    // Output redirection
+                                    if (strcmp(filev[1], "0") != 0) // Check if there is an output redirection
+                                    {
+                                        close(STDOUT_FILENO); // Close stdout
+                                        int fd = open(filev[1], O_WRONLY | O_CREAT | O_TRUNC, 0666); // Open file to write
+                                        if (fd != 1) // If redirection was done correctly, fd should be 1
+                                        {
+                                            perror("Error redirecting output");
+                                            exit(-1);
+                                        }
+                                    }
+
                                     dup2(pip1[0], STDIN_FILENO); // Redirect stdin to pipe 1 read descriptor
                                     close(pip1[0]); // Close duplicated pipe 1 read descriptor
                                 }
@@ -358,6 +393,18 @@ int main(int argc, char* argv[])
                             {
                                 if (i == command_counter-1) // Last command. Only read from pipe and write into std_out
                                 {
+                                    // Output redirection
+                                    if (strcmp(filev[1], "0") != 0) // Check if there is an output redirection
+                                    {
+                                        close(STDOUT_FILENO); // Close stdout
+                                        int fd = open(filev[1], O_WRONLY | O_CREAT | O_TRUNC, 0666); // Open file to write
+                                        if (fd != 1) // If redirection was done correctly, fd should be 1
+                                        {
+                                            perror("Error redirecting output");
+                                            exit(-1);
+                                        }
+                                    }
+                                    
                                     dup2(pip2[0], STDIN_FILENO); // Redirect stdin to pipe 2 read descriptor
                                     close(pip2[0]); // Close duplicated pipe 2 read descriptor
                                 }
@@ -373,7 +420,6 @@ int main(int argc, char* argv[])
 
                             // Execute the command
                             getCompleteCommand(argvv, i);
-                            fprintf(stderr, "Executing command %d: %s\n", i, argv_execvp[0]);
                             execvp(argv_execvp[0], argv_execvp);
                             perror("Error executing the command"); // This line should not be executed
                             exit(-1);
@@ -412,10 +458,20 @@ int main(int argc, char* argv[])
                             if (i == command_counter-1) // Only for last child created (the one that prints the output)
                             {
                                 if (in_background == 0) // Foreground: wait for child to finish.
+                                {
                                     while (wait(&status) != pid) // Wait for child to finish. Close other processes in the way
                                         continue;
+                                }
                                 else // Background: print pid and do not wait for child.
                                     printf("%d\n", pid); // Do not wait for child. Print pid of proccess in background
+                                
+                                // Restore stderr
+                                if (strcmp(filev[2], "0") != 0) // Check if there was an error redirection
+                                {
+                                    close(STDERR_FILENO); // Close file descriptor of the redirected error file
+                                    dup2(original_stderror, STDERR_FILENO); // Restore stderr
+                                }
+
                             }   
                         }
                     }
@@ -433,6 +489,44 @@ int main(int argc, char* argv[])
                         exit(-1);
                     
                     case 0: // Child process
+
+                        // Input redirection
+                        if (strcmp(filev[0], "0") != 0) // Check if there is an input redirection
+                        {
+                            close(STDIN_FILENO); // Close stdin
+                            int fd = open(filev[0], O_RDONLY); // Open file to read
+                            if (fd != 0) // If redirection was done correctly, fd should be 0
+                            {
+                                perror("Error opening file for input redirection");
+                                exit(-1);
+                            }
+                        }
+
+                        // Output redirection
+                        if (strcmp(filev[1], "0") != 0) // Check if there is an output redirection
+                        {
+                            close(STDOUT_FILENO); // Close stdout
+                            int fd = open(filev[1], O_WRONLY | O_CREAT | O_TRUNC, 0666); // Open file to write
+                            if (fd != 1) // If redirection was done correctly, fd should be 1
+                            {
+                                perror("Error redirecting output");
+                                exit(-1);
+                            }
+                        }
+
+                        // Error redirection
+                        if (strcmp(filev[2], "0") != 0) // Check if there is an error redirection
+                        {
+                            close(STDERR_FILENO); // Close stderr
+                            int fd = open(filev[2], O_WRONLY | O_CREAT | O_TRUNC, 0666); // Open file to write
+                            if (fd != 2) // If redirection was done correctly, fd should be 2
+                            {
+                                perror("Error redirecting errors output");
+                                exit(-1);
+                            }
+                        }
+
+                        // Execute command
                         getCompleteCommand(argvv, 0);
                         execvp(argv_execvp[0], argv_execvp);
                         perror("Error executing the command"); // This line should not be executed
