@@ -285,112 +285,168 @@ int main(int argc, char* argv[])
 
             //Simple commands and redirects
             else // There are commands different from mycalc and myhistory
-            {
-                // Create a child
-                pid_t pid = fork();
-                switch (pid)
+            {   
+                // More than one command (from 2 to n commands.)
+                if (command_counter > 1)
                 {
-                case -1: // Error while creating a child
-                    perror("Error creating a child\n");
-                    exit(-1);
-                
-                case 0: // Child process
-                    execvp(argvv[0][0], argvv[0]);
-                    perror("Error executing the command\n"); // This line should not be executed
-                    exit(-1);
-                default: // Parent process
-                    wait(&status);
-                }
-                /*
-                pid_t pid;
-                int fd[2];
-                int fd1, fd2, fd3; // File descriptors for the input, output and error files
+                    // Save std_in and std_out for later restore
+                    int original_stdin = dup(STDIN_FILENO);
+                    int original_stdout = dup(STDOUT_FILENO);
 
-                // Input command
-                if (strcmp(filev[0], "0") != 0) 
-                {
-                    // Checks if there is an input file
-                    if (fd1 = open(filev[0], O_RDONLY) < 0)
-                        perror("Cannot open input file\n"); // Print error
-                    if (dup2(fd1, 0) < 0)
-                        perror("Error dup2 fd1\n");
-                    if(close(fd1) < 0)
-                        perror("Cannot close descriptor fd1\n");
-                }
-                
-                // Output file
-                if (strcmp(filev[1], "0") != 0) 
-                {
-                    // Checks if there is an output file
-                    if ((fd2 = open(filev[1], O_WRONLY | O_CREAT | O_TRUNC, 0664)) < 0)
-                        perror("Cannot read the output file");
-                    if (dup2(fd2, 1) < 0)
-                        perror("Error dup2 fd2\n");
-                    if(close(fd2) < 0)
-                        perror("Cannot close descriptor fd2\n");
-                }
+                    // Create pipe descriptors.
+                    int pip1[2];
+                    int pip2[2];
 
-                // Error file
-                if (strcmp(filev[2], "0") != 0) 
-                {
-                    // Checks if there is an error file
-                    if ((fd3 = open(filev[2], O_WRONLY | O_CREAT | O_TRUNC, 0664)) < 0)
-                        perror("Cannot read the error file");
-                    if (dup2(fd3, 2) < 0)
-                        perror("Error dup2 fd3\n");
-                    if(close(fd3) < 0)
-                        perror("Cannot close descriptor fd3\n");
-                }
-
-                for (int i = 0; i < command_counter; i++)
-                {
-                    // Create an array of pipes
-                    int pipes[command_counter-1][2];
-                    for (int i=0;i < command_counter; i++)
+                    // Create pipes before fork. Link inside child process.
+                    for (int i=0; i < command_counter; i++)
                     {
-                        if (pipe(pipes[i]) < 0)
+                        if (i % 2 == 0) // New pipe 1 since pipe 1 has been fully used, we need a new one. Also, case for i == 0
                         {
-                            // Error creating a pipe
-                            perror("Cannot create pipe\n");
-                            return -1;
+                            if (i != command_counter-1) // Check if it is not the last iteration, since we do not need a pipe 1 for the last command.
+                            {
+                                if (pipe(pip1) == -1) // Create pipe 1
+                                {
+                                    perror("Error creating pipe");
+                                    exit(-1);
+                                }
+                            }
+                        }
+                        else // New pipe 2 since pipe 2 has been fully used, we need a new one.
+                        {
+                            if (i != command_counter-1) // Check if it is not the last iteration, since we do not need a pipe 2 for the last command.
+                                if (pipe(pip2) == -1) // Create pipe 2
+                                {
+                                    perror("Error creating pipe");
+                                    exit(-1);
+                                }
+                        }
+
+                        // Create a child, link pipes and execute the command.
+                        pid_t pid = fork();
+                        switch (pid)
+                        {
+                        case -1: // Error creating a child
+                            perror("Error creating a child");
+                            exit(-1);
+                        
+                        case 0: // Child process. Will execute the command once linked the pipes
+
+                            // First command
+                            if (i == 0)
+                            {
+                                close(pip1[0]); // Close pipe 1 read descriptor since it is not needed
+                                dup2(pip1[1], STDOUT_FILENO); // Redirect stdout to pipe 1 write descriptor
+                                close(pip1[1]); // Close duplicated pipe 1 write descriptor
+                            }
+                            else if (i % 2 == 1) // Odd iteration -> read from pipe 1 and write into pipe 2
+                            {
+                                if (i == command_counter-1) // Last command. Only read from pipe and write into std_out
+                                {
+                                    dup2(pip1[0], STDIN_FILENO); // Redirect stdin to pipe 1 read descriptor
+                                    close(pip1[0]); // Close duplicated pipe 1 read descriptor
+                                }
+                                else // Not the last command. Read and write with pipes
+                                {
+                                    close(pip2[0]); // Close pipe 2 read descriptor since it is not needed
+                                    dup2(pip1[0], STDIN_FILENO); // Redirect stdin to pipe 1 read descriptor
+                                    close(pip1[0]); // Close duplicated pipe 1 read descriptor
+                                    dup2(pip2[1], STDOUT_FILENO); // Redirect stdout to pipe 2 write descriptor
+                                    close(pip2[1]); // Close duplicated pipe 2 write descriptor
+                                }
+                            }
+                            else // Even iteration -> read from pipe 2 and write into pipe 1
+                            {
+                                if (i == command_counter-1) // Last command. Only read from pipe and write into std_out
+                                {
+                                    dup2(pip2[0], STDIN_FILENO); // Redirect stdin to pipe 2 read descriptor
+                                    close(pip2[0]); // Close duplicated pipe 2 read descriptor
+                                }
+                                else // Not the last command. Read and write with pipes
+                                {
+                                    close(pip1[0]); // Close pipe 1 read descriptor since it is not needed
+                                    dup2(pip2[0], STDIN_FILENO); // Redirect stdin to pipe 2 read descriptor
+                                    close(pip2[0]); // Close duplicated pipe 2 read descriptor
+                                    dup2(pip1[1], STDOUT_FILENO); // Redirect stdout to pipe 1 write descriptor
+                                    close(pip1[1]); // Close duplicated pipe 1 write descriptor
+                                }
+                            }
+
+                            // Execute the command
+                            getCompleteCommand(argvv, i);
+                            fprintf(stderr, "Executing command %d: %s\n", i, argv_execvp[0]);
+                            execvp(argv_execvp[0], argv_execvp);
+                            perror("Error executing the command"); // This line should not be executed
+                            exit(-1);
+
+                        default: // Parent process, does not execute other process.
+                        
+                            // Close pipes for each iteration.
+                            if (i == 0) // First iteration, only close write end of pipe 1
+                            {
+                                close(pip1[1]);
+                            }
+                            else if (i % 2 == 1) // Odd iteration, check if it is the last command and close pipes accordingly
+                            {
+                                if (i == command_counter-1) // Last command, close read end of pipe 1
+                                {
+                                    close(pip1[0]);
+                                }
+                                else // Not the last command, close both pipes
+                                {
+                                    close(pip1[0]); // Close read end of pipe 1
+                                    close(pip2[1]); // Close write end of pipe 2
+                                }
+                            }
+                            else // Even iteration, check if it is the last command and close pipes accordingly
+                            {
+                                if (i == command_counter-1) // Last command, close read end of pipe 2
+                                {
+                                    close(pip2[0]);
+                                }
+                                else // Not the last command, close both pipes
+                                {
+                                    close(pip2[0]);
+                                    close(pip1[1]);
+                                }
+                            }
+                            if (i == command_counter-1) // Only for last child created (the one that prints the output)
+                            {
+                                if (in_background == 0) // Foreground: wait for child to finish.
+                                    while (wait(&status) != pid) // Wait for child to finish. Close other processes in the way
+                                        continue;
+                                else // Background: print pid and do not wait for child.
+                                    printf("%d\n", pid); // Do not wait for child. Print pid of proccess in background
+                            }   
                         }
                     }
+                }
 
-
-                    // Create a child
-                    pid = fork();
-
-                    // If there is an error
-                    if (pid == -1)
+                // Only one command, no pipes needed
+                else
+                {
+                    // Create a child and execute the process
+                    pid_t pid = fork();
+                    switch (pid)
                     {
-                        perror("There is an error creating a child\n");
-                        return -1;
-                    }
-
-                    // Child
-                    else if (pid == 0)
-                    {
-                        getCompleteCommand(argvv, i);
-                        if (i != 0)
-                        {
-                            
-                            
-                            
-            
-                            
-
-                        }
+                    case -1: // Error while creating a child
+                        perror("Error creating a child");
+                        exit(-1);
                     
-                    }
+                    case 0: // Child process
+                        getCompleteCommand(argvv, 0);
+                        execvp(argv_execvp[0], argv_execvp);
+                        perror("Error executing the command"); // This line should not be executed
+                        exit(-1);
 
-                    else
-                    {
+                    default: // Parent process
+                        if (in_background == 0)
+                            while (wait(&status) != pid) // Wait for child to finish. Close other processes in the way
+                                continue;
+                        else
+                            printf("%d\n", pid); // Do not wait for child. Print pid of proccess in background
+
                     }
-                
                 }
-
-
-                */
             }
 
 
