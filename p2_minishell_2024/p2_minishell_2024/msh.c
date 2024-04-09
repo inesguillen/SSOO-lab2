@@ -242,30 +242,42 @@ int main(int argc, char* argv[])
 
                         // We set the new Acc value
                         if (setenv("Acc", p, 1) < 0) 
+                            {
                             perror("Error giving value to environment variable\n");
+                            exit(-1);
+                            }
 
                         // Print message
-                        sprintf(msg,"[OK] %d + %d = %d; Acc %s\n", op1, op2, op1+op2, getenv("Acc"));
+                        sprintf(msg,"[OK] %d + %d = %d; Acc %s", op1, op2, op1+op2, getenv("Acc"));
+                        perror(msg);
                     }
                     
                     // We have case 'mul'
                     else if(strcmp(argvv[0][2], "mul") == 0)
-                        sprintf(msg,"[OK] %d * %d = %d\n", op1, op2, op1*op2);
+                    {
+                        sprintf(msg,"[OK] %d * %d = %d", op1, op2, op1*op2);
+                        perror(msg);
+                    }
 
                     // We have case 'div'
                     else if(strcmp(argvv[0][2], "div") == 0)
                     {
                         if(op2 == 0)
-                            sprintf(msg, "[ERROR] You cannot divide by 0\n"); // Divisor cannot be 0
+                            printf("[ERROR] You cannot divide by 0\n"); // Divisor cannot be 0
                         // Print message
                         else
-                            sprintf(msg,"[OK] %d / %d = %d; Remainder %d\n", op1, op2, op1/op2, op1%op2);
+                        {
+                            sprintf(msg,"[OK] %d / %d = %d; Remainder %d", op1, op2, op1/op2, op1%op2);
+                            perror(msg);
+                        }
                     }
+                    else
+                        // We have error case
+                        printf("[ERROR] The structure of the command is mycalc <operand 1> <add/mul/div> <operand 2>\n");
                 }
                 else
                     // We have error case
-                    sprintf(msg, "[ERROR] The structure of the command is mycalc <operand 1> <add/mul/div> <operand 2>\n");
-                printf(msg);
+                    printf("[ERROR] The structure of the command is mycalc <operand 1> <add/mul/div> <operand 2>\n");
                 
             }
 
@@ -326,6 +338,41 @@ int main(int argc, char* argv[])
                         perror(msg); // Print the command by error output
                     }
                 }
+                else // An argument was given. Change input parameters to the command we want to execute.
+                {
+                    // Access the command we want to execute
+                    int command_number = atoi(argvv[0][1]); // Convert the argument to integer
+                    if (command_number < n_elem) // Check if the command number is valid
+                    {
+                        // Change the input parameters to the command we want to execute
+                        for (int i=0; i < history[command_number].num_commands; i++) // Iterate all the commands of the history
+                        {
+                            for (int j=0; j < history[command_number].args[i]; j++) // Iterate all the arguments of the command
+                            {
+                                strcpy(argvv[i][j], history[command_number].argvv[i][j]); // Change the arguments of the command
+                            }
+                            if (history[command_number].args[i] < 2) // If there are less than 2 arguments (only one command)
+                            {
+                                argvv[i][1] =  NULL; // Set the last argument to NULL to indicate end of arguments.
+                                                     // This is needed to avoid executing the command with <command_nummber> as argument 
+                            }
+                        }
+                        for (int i=0; i < 3; i++) // Iterate all the redirections
+                        {
+                            strcpy(filev[i], history[command_number].filev[i]); // Change the redirections
+                        }
+                        in_background = history[command_number].in_background; // Change the background flag
+
+                        run_history = 1; // Change the flag to run the command
+                        char msg[100]; // Where we are going to save the message to be printed
+                        sprintf(msg, "Running command %d", command_number);
+                        perror(msg); // Print the command by error output
+                    }
+                    else // Command number is not valid
+                    {
+                        printf("ERROR: Command not found\n");
+                    }
+                }
             }
 
             
@@ -334,33 +381,37 @@ int main(int argc, char* argv[])
 //************************************************************************************************
 
 
-            //Simple commands and redirects
-            else // There are commands different from mycalc and myhistory
+            //Simple commands
+            if (strcmp(argvv[0][0], "mycalc") != 0 && strcmp(argvv[0][0], "myhistory") != 0) // It is a simple command or myhistory was executed with a valid argument
             {   
-                // Store commands in history before execution
-                if (n_elem < history_size) // There is space for another command
+                // Check if the command is being run from myhistory or not
+                if (run_history == 0) // If not, add to myhistory
                 {
-                    store_command(argvv, filev, in_background, &(history[tail])); // Store command in history
-                    n_elem++;
-                }
-                else if (tail == history_size) // History full. Reached end of the array
-                {
-                    if (head == history_size) // If head is at the end of the array, move it to the beginning
-                        head = 0;
-                    head++; // Point to the next position in history for later printing
+                    // Store commands in history before execution
+                    if (n_elem < history_size) // There is space for another command
+                    {
+                        store_command(argvv, filev, in_background, &(history[tail])); // Store command in history
+                        n_elem++;
+                    }
+                    else if (tail == history_size) // History full. Reached end of the array
+                    {
+                        if (head == history_size) // If head is at the end of the array, move it to the beginning
+                            head = 0;
+                        head++; // Point to the next position in history for later printing
 
-                    tail = 0; // Move to the beginning of the array
-                    // free_command(&(history[tail])); // Free space for the new command
-                    store_command(argvv, filev, in_background, &(history[tail])); // Store new command in history
-                }
-                else // History full. Not reached end of the array
-                {
-                    // free_command(&(history[tail]));
-                    store_command(argvv, filev, in_background, &(history[tail]));
+                        tail = 0; // Move to the beginning of the array
+                        // free_command(&(history[tail])); // Free space for the new command
+                        store_command(argvv, filev, in_background, &(history[tail])); // Store new command in history
+                    }
+                    else // History full. Not reached end of the array
+                    {
+                        // free_command(&(history[tail]));
+                        store_command(argvv, filev, in_background, &(history[tail]));
 
-                    head++; // Point to the next position in history for later printing
+                        head++; // Point to the next position in history for later printing
+                    }
+                    tail++; // Point to next position in history
                 }
-                tail++; // Point to next position in history
 
                 // More than one command (from 2 to n commands.)
                 if (command_counter > 1)
