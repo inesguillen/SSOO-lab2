@@ -217,7 +217,7 @@ int main(int argc, char* argv[])
             else
             {
                 // Print command
-                print_command(argvv, filev, in_background);
+                // print_command(argvv, filev, in_background);
             }
 
 
@@ -274,7 +274,58 @@ int main(int argc, char* argv[])
             // Code myhistory
             else if (strcmp(argvv[0][0], "myhistory") == 0)
             {
+                if (argvv[0][1] == NULL) // No argument, print all command history by std_errout
+                {
+                    char msg[100]; // Where we are going to save the message to be printed
+                    int temphead = head; // Temporal variable to iterate through the history
+                    for (int i=0; i < n_elem; i++) // Iterate all the history
+                    {
+                        sprintf(msg, "%d ", i); // Reset msg and add the number of the command in history order
+                        // Iterate to add all commands
+                        for (int j=0; j < history[temphead].num_commands; j++) // Iterate all the commands of the history
+                        {
+                            for (int k=0; k < history[temphead].args[j]; k++) // Iterate all the arguments of the command
+                            {
+                                if (k == 0) // If it is the first argument
+                                    strcat(msg, history[temphead].argvv[j][k]); // Concatenate the command
+                                else // If it is not the first argument
+                                {
+                                    strcat(msg, " "); // Add a space between arguments
+                                    strcat(msg, history[temphead].argvv[j][k]); // Concatenate the arguments of the command
+                                }
+                            }
+                            if (j < history[temphead].num_commands-1) // If it is not the last command
+                                strcat(msg, " | "); // Add a new vertical line between commands
+                        }
 
+                        // Once done with the commands, check for redirections
+                        if (strcmp(history[temphead].filev[0], "0") != 0) // Check if there is an input redirection
+                        {
+                            strcat(msg, " < "); // Add input redirection symbol
+                            strcat(msg, history[temphead].filev[0]); // Add the input redirection file
+                        }
+                        if (strcmp(history[temphead].filev[1], "0") != 0) // Check if there is an output redirection
+                        {
+                            strcat(msg, " > "); // Add output redirection symbol
+                            strcat(msg, history[temphead].filev[1]); // Add the output redirection file
+                        }
+                        if (strcmp(history[temphead].filev[2], "0") != 0) // Check if there is an error redirection
+                        {
+                            strcat(msg, " !> "); // Add error redirection symbol
+                            strcat(msg, history[temphead].filev[2]); // Add the error redirection file
+                        }
+
+                        // Check for background symbol
+                        if (history[temphead].in_background == 1) // Check if the command was executed in background
+                            strcat(msg, " &"); // Add the background symbol
+
+                        // Move pointer and print message
+                        temphead++;
+                        if (temphead == history_size) // If we reach the end of the array, go to the beginning
+                            temphead = 0;
+                        perror(msg); // Print the command by error output
+                    }
+                }
             }
 
             
@@ -286,6 +337,31 @@ int main(int argc, char* argv[])
             //Simple commands and redirects
             else // There are commands different from mycalc and myhistory
             {   
+                // Store commands in history before execution
+                if (n_elem < history_size) // There is space for another command
+                {
+                    store_command(argvv, filev, in_background, &(history[tail])); // Store command in history
+                    n_elem++;
+                }
+                else if (tail == history_size) // History full. Reached end of the array
+                {
+                    if (head == history_size) // If head is at the end of the array, move it to the beginning
+                        head = 0;
+                    head++; // Point to the next position in history for later printing
+
+                    tail = 0; // Move to the beginning of the array
+                    // free_command(&(history[tail])); // Free space for the new command
+                    store_command(argvv, filev, in_background, &(history[tail])); // Store new command in history
+                }
+                else // History full. Not reached end of the array
+                {
+                    // free_command(&(history[tail]));
+                    store_command(argvv, filev, in_background, &(history[tail]));
+
+                    head++; // Point to the next position in history for later printing
+                }
+                tail++; // Point to next position in history
+
                 // More than one command (from 2 to n commands.)
                 if (command_counter > 1)
                 {
