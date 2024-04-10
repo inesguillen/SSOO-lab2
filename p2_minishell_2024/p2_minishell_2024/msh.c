@@ -200,28 +200,8 @@ int main(int argc, char* argv[])
 
 
 		/************************ STUDENTS CODE ********************************/
-	    if (command_counter > 0)
+	    if (command_counter > 0 && command_counter <= MAX_COMMANDS)
         {
-            if (command_counter > MAX_COMMANDS)
-            {
-                char max_commands_str[20];
-                sprintf(max_commands_str, "%d", MAX_COMMANDS);
-
-                // Construye el mensaje de error completo
-                char error_msg[MSG_SIZE] = "Error: Maximum number of commands is ";
-                strcat(error_msg, max_commands_str);
-
-                // Imprime el mensaje de error utilizando perror()
-                perror(error_msg);
-                    //perror("Error: Maximum number of commands is %d \n", MAX_COMMANDS);
-			}
-            else
-            {
-                // Print command
-                // print_command(argvv, filev, in_background);
-            }
-
-
             // Code mycalc
             if (strcmp(argvv[0][0], "mycalc") == 0) {
                 char msg[MSG_SIZE]; // Where we are going to save the message to be printed
@@ -675,6 +655,11 @@ int main(int argc, char* argv[])
 
 
         }
+        else if (command_counter > MAX_COMMANDS)
+        {
+            printf("Error: Maximum number of commands is %d \n", MAX_COMMANDS);
+        }
+        
     }
     // Return and finish
 	return 0;
