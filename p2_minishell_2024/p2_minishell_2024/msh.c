@@ -248,15 +248,15 @@ int main(int argc, char* argv[])
                             }
 
                         // Print message
-                        sprintf(msg,"[OK] %d + %d = %d; Acc %s", op1, op2, op1+op2, getenv("Acc"));
-                        perror(msg);
+                        sprintf(msg,"[OK] %d + %d = %d; Acc %s\n", op1, op2, op1+op2, getenv("Acc"));
+                        fprintf(stderr, msg);
                     }
                     
                     // We have case 'mul'
                     else if(strcmp(argvv[0][2], "mul") == 0)
                     {
-                        sprintf(msg,"[OK] %d * %d = %d", op1, op2, op1*op2);
-                        perror(msg);
+                        sprintf(msg,"[OK] %d * %d = %d\n", op1, op2, op1*op2);
+                        fprintf(stderr, msg);
                     }
 
                     // We have case 'div'
@@ -267,17 +267,17 @@ int main(int argc, char* argv[])
                         // Print message
                         else
                         {
-                            sprintf(msg,"[OK] %d / %d = %d; Remainder %d", op1, op2, op1/op2, op1%op2);
-                            perror(msg);
+                            sprintf(msg,"[OK] %d / %d = %d; Remainder %d\n", op1, op2, op1/op2, op1%op2);
+                            fprintf(stderr, msg);
                         }
                     }
                     else
                         // We have error case
-                        printf("[ERROR] The structure of the command is mycalc <operand 1> <add/mul/div> <operand 2>\n");
+                        printf("[ERROR] The structure of the command is mycalc <operand_1> <add/mul/div> <operand_2>\n");
                 }
                 else
                     // We have error case
-                    printf("[ERROR] The structure of the command is mycalc <operand 1> <add/mul/div> <operand 2>\n");
+                    printf("[ERROR] The structure of the command is mycalc <operand_1> <add/mul/div> <operand_2>\n");
                 
             }
 
@@ -335,7 +335,9 @@ int main(int argc, char* argv[])
                         temphead++;
                         if (temphead == history_size) // If we reach the end of the array, go to the beginning
                             temphead = 0;
-                        perror(msg); // Print the command by error output
+
+                        strcat(msg, "\n"); // Add a new line at the end of the message
+                        fprintf(stderr, msg); // Print the command by error output
                     }
                 }
                 else // An argument was given. Change input parameters to the command we want to execute.
@@ -365,8 +367,8 @@ int main(int argc, char* argv[])
 
                         run_history = 1; // Change the flag to run the command
                         char msg[100]; // Where we are going to save the message to be printed
-                        sprintf(msg, "Running command %d", command_number);
-                        perror(msg); // Print the command by error output
+                        sprintf(msg, "Running command %d\n", command_number);
+                        fprintf(stderr, msg); // Print the command by error output
                     }
                     else // Command number is not valid
                     {
