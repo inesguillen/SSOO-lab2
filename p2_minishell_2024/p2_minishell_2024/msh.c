@@ -18,6 +18,7 @@
 #include <math.h>
 
 #define MAX_COMMANDS 8
+#define MSG_SIZE 100
 
 
 // files in case of redirection
@@ -207,7 +208,7 @@ int main(int argc, char* argv[])
                 sprintf(max_commands_str, "%d", MAX_COMMANDS);
 
                 // Construye el mensaje de error completo
-                char error_msg[100] = "Error: Maximum number of commands is ";
+                char error_msg[MSG_SIZE] = "Error: Maximum number of commands is ";
                 strcat(error_msg, max_commands_str);
 
                 // Imprime el mensaje de error utilizando perror()
@@ -223,7 +224,7 @@ int main(int argc, char* argv[])
 
             // Code mycalc
             if (strcmp(argvv[0][0], "mycalc") == 0) {
-                char msg[100]; // Where we are going to save the message to be printed
+                char msg[MSG_SIZE]; // Where we are going to save the message to be printed
                 if (argvv[0][1] != NULL && argvv[0][2] != NULL && argvv[0][3] != NULL){
 
                     // Convert operators into integers
@@ -288,7 +289,7 @@ int main(int argc, char* argv[])
             {
                 if (argvv[0][1] == NULL) // No argument, print all command history by std_errout
                 {
-                    char msg[100]; // Where we are going to save the message to be printed
+                    char msg[MSG_SIZE]; // Where we are going to save the message to be printed
                     int temphead = head; // Temporal variable to iterate through the history
                     for (int i=0; i < n_elem; i++) // Iterate all the history
                     {
@@ -366,7 +367,7 @@ int main(int argc, char* argv[])
                         in_background = history[command_number].in_background; // Change the background flag
 
                         run_history = 1; // Change the flag to run the command
-                        char msg[100]; // Where we are going to save the message to be printed
+                        char msg[MSG_SIZE]; // Where we are going to save the message to be printed
                         sprintf(msg, "Running command %d\n", command_number);
                         fprintf(stderr, msg); // Print the command by error output
                     }
