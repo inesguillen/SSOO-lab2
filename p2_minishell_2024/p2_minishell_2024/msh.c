@@ -200,7 +200,7 @@ int main(int argc, char* argv[])
 
 
 		/************************ STUDENTS CODE ********************************/
-	    if (command_counter > 0 && command_counter <= MAX_COMMANDS)
+	    if (command_counter > 0 && command_counter <= MAX_COMMANDS) // Right ammount of commands
         {
             // Code mycalc
             if (strcmp(argvv[0][0], "mycalc") == 0) {
@@ -325,7 +325,7 @@ int main(int argc, char* argv[])
                 {
                     // Access the command we want to execute
                     int command_number = atoi(argvv[0][1]); // Convert the argument to integer
-                    if (command_number < n_elem) // Check if the command number is valid
+                    if (command_number < n_elem && command_number >= 0) // Check if the command number is valid
                     {
                         // Change the input parameters to the command we want to execute
                         for (int i=0; i < history[command_number].num_commands; i++) // Iterate all the commands of the history
@@ -345,6 +345,9 @@ int main(int argc, char* argv[])
                             strcpy(filev[i], history[command_number].filev[i]); // Change the redirections
                         }
                         in_background = history[command_number].in_background; // Change the background flag
+
+                        command_counter = history[command_number].num_commands; // Change the number of commands
+                        
 
                         run_history = 1; // Change the flag to run the command
                         char msg[MSG_SIZE]; // Where we are going to save the message to be printed
@@ -383,12 +386,10 @@ int main(int argc, char* argv[])
                         head++; // Point to the next position in history for later printing
 
                         tail = 0; // Move to the beginning of the array
-                        // free_command(&(history[tail])); // Free space for the new command
                         store_command(argvv, filev, in_background, &(history[tail])); // Store new command in history
                     }
                     else // History full. Not reached end of the array
                     {
-                        // free_command(&(history[tail]));
                         store_command(argvv, filev, in_background, &(history[tail]));
 
                         head++; // Point to the next position in history for later printing
@@ -579,7 +580,8 @@ int main(int argc, char* argv[])
                                 if (strcmp(filev[2], "0") != 0) // Check if there was an error redirection
                                 {
                                     close(STDERR_FILENO); // Close file descriptor of the redirected error file
-                                    dup2(original_stderror, STDERR_FILENO); // Restore stderr
+                                    dup(original_stderror); // Restore stderr
+                                    close(original_stderror); // Close duplicated file descriptor
                                 }
 
                             }   
@@ -659,7 +661,7 @@ int main(int argc, char* argv[])
         {
             printf("Error: Maximum number of commands is %d \n", MAX_COMMANDS);
         }
-        
+
     }
     // Return and finish
 	return 0;
