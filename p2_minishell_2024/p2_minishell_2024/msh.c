@@ -324,7 +324,8 @@ int main(int argc, char* argv[])
                 else // An argument was given. Change input parameters to the command we want to execute.
                 {
                     // Access the command we want to execute
-                    int command_number = atoi(argvv[0][1]); // Convert the argument to integer
+                    int command_number = (head + atoi(argvv[0][1])) % history_size; // Convert the argument to integer
+                    int print_command = atoi(argvv[0][1]); // Save the command number to print it later
                     if (command_number < n_elem && command_number >= 0) // Check if the command number is valid
                     {
                         // Change the input parameters to the command we want to execute
@@ -351,7 +352,7 @@ int main(int argc, char* argv[])
 
                         run_history = 1; // Change the flag to run the command
                         char msg[MSG_SIZE]; // Where we are going to save the message to be printed
-                        sprintf(msg, "Running command %d\n", command_number);
+                        sprintf(msg, "Running command %d\n", print_command); // Print the command number
                         fprintf(stderr, msg); // Print the command by error output
                     }
                     else // Command number is not valid
@@ -386,10 +387,12 @@ int main(int argc, char* argv[])
                         head++; // Point to the next position in history for later printing
 
                         tail = 0; // Move to the beginning of the array
+                        free_command(&(history[tail])); // Free the memory of the command in the beginning of the array
                         store_command(argvv, filev, in_background, &(history[tail])); // Store new command in history
                     }
                     else // History full. Not reached end of the array
                     {
+                        free_command(&(history[tail])); // Free the memory of the command in the current position
                         store_command(argvv, filev, in_background, &(history[tail]));
 
                         head++; // Point to the next position in history for later printing
