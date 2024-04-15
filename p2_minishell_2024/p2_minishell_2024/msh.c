@@ -331,15 +331,18 @@ int main(int argc, char* argv[])
                         // Change the input parameters to the command we want to execute
                         for (int i=0; i < history[command_number].num_commands; i++) // Iterate all the commands of the history
                         {
+                            if (argvv[i] != NULL) // If the command is not NULL
+                                free(argvv[i]); // Free the memory of the command
+                            argvv[i] = malloc(sizeof(char*) * history[command_number].args[i]); // Allocate memory for the command
                             for (int j=0; j < history[command_number].args[i]; j++) // Iterate all the arguments of the command
                             {
-                                strcpy(argvv[i][j], history[command_number].argvv[i][j]); // Change the arguments of the command
+                                argvv[i][j] = strdup(history[command_number].argvv[i][j]); // Change the arguments of the command
                             }
-                            if (history[command_number].args[i] < 2) // If there are less than 2 arguments (only one command)
-                            {
-                                argvv[i][1] =  NULL; // Set the last argument to NULL to indicate end of arguments.
-                                                     // This is needed to avoid executing the command with <command_nummber> as argument 
-                            }
+                        }
+                        if (history[command_number].args[0] < 2) // If there are less than 2 arguments (only one command)
+                        {
+                            argvv[0][1] =  NULL; // Set the last argument to NULL to indicate end of arguments.
+                                                    // This is needed to avoid executing the command with <command_nummber> as argument 
                         }
                         for (int i=0; i < 3; i++) // Iterate all the redirections
                         {
